@@ -1,71 +1,83 @@
 const inquirer = require('inquirer');
 const fs = require('fs');
-const { Triangle, Circle, Square } = require('./lib/shapes');
+const { Triangle, Square, Circle } = require('./lib/shapes');
 
-async function main() {
-  try {
-    const userInput = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'logoText',
-        message: 'Enter up to three characters for the logo text:',
-        validate: function (input) {
-          return input.length <= 3 ? true : 'Please enter up to three characters.';
-        },
-      },
-      {
-        type: 'input',
-        name: 'textColor',
-        message: 'Enter a color keyword or hexadecimal number for the text color:',
-        validate: function (input) {
-          // You can add more validation here based on color formats
-          return /^[a-fA-F0-9]{6}$/.test(input) || /[a-z]+/i.test(input) ? true : 'Invalid color format.';
-        },
-      },
-      {
-        type: 'list',
-        name: 'shapeChoice',
-        message: 'Choose a shape for the logo:',
-        choices: ['circle', 'triangle', 'square'],
-      },
-      {
-        type: 'input',
-        name: 'shapeColor',
-        message: 'Enter a color keyword or hexadecimal number for the shape color:',
-        validate: function (input) {
-          // You can add more validation here based on color formats
-          return /^[a-fA-F0-9]{6}$/.test(input) || /[a-z]+/i.test(input) ? true : 'Invalid color format.';
-        },
-      },
-    ]);
-
-    // Create an instance of the selected shape class
-    let selectedShape;
-    switch (userInput.shapeChoice) {
-      case 'circle':
-        selectedShape = new Circle();
-        break;
-      case 'triangle':
-        selectedShape = new Triangle();
-        break;
-      case 'square':
-        selectedShape = new Square();
-        break;
-    }
-
-    // Set the shape's color based on user input
-    selectedShape.setColor(userInput.shapeColor);
-
-    // Generate the SVG string for the shape
-    const svg = selectedShape.render();
-
-    // Save the SVG to a file named 'logo.svg'
-    fs.writeFileSync('logo.svg', svg);
-
-    console.log('Generated logo.svg');
-  } catch (error) {
-    console.error('An error occurred:', error);
-  }
+// Custom function to validate colors (using regular expressions)
+function validateColor(color) {
+  // Regular expression to validate color codes (hex or basic color names)
+  const colorRegex = /^#([0-9a-fA-F]{3}){1,2}$|^(red|green|blue|cyan|magenta|yellow|black|white|gray|grey)$/i;
+  return colorRegex.test(color);
 }
 
-main();
+const questions = [
+  {
+    type: 'input',
+    name: 'text',
+    message: 'What text should be displayed? Enter up to three characters.',
+    validate: (text) => {
+      if (text.length <= 3) return true;
+      else return 'Text must be three or fewer characters.';
+    },
+  },
+  {
+    type: 'input',
+    name: 'textColor',
+    message: 'What color would you like the text to be? Enter a color keyword (OR a hexadecimal number).',
+    validate: (textColor) => {
+      if (validateColor(textColor)) return true;
+      else return 'Please enter a valid color (hex code or basic color name).';
+    },
+  },
+  {
+    type: 'list',
+    name: 'shape',
+    message: 'What shape should the logo be?',
+    choices: ['Circle', 'Triangle', 'Square'],
+  },
+  {
+    type: 'input',
+    name: 'shapeColor',
+    message: 'What color would you like the shape to be? Enter a color keyword (OR a hexadecimal number).',
+    validate: (shapeColor) => {
+      if (validateColor(shapeColor)) return true;
+      else return 'Please enter a valid color (hex code or basic color name).';
+    },
+  },
+];
+
+inquirer.prompt(questions).then((answers) => {
+  const { text, textColor, shape, shapeColor } = answers;
+  const fileName = 'logo.svg';
+  let shapeObject;
+
+  switch (shape.toLowerCase()) {
+    case 'circle':
+      shapeObject = new Circle();
+      break;
+    case 'triangle':
+      shapeObject = new Triangle();
+      break;
+    case 'square':
+      shapeObject = new Square();
+      break;
+    default:
+      console.error('Invalid shape choice.');
+      return;
+  }
+
+  shapeObject.setColor(shapeColor);
+
+  const svgString = `<svg version="1.1" width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+    <g>${shapeObject.render()}
+      <text x="150" y="130" text-anchor="middle" font-size="40" fill="${textColor}">${text}</text>
+    </g>
+  </svg>`;
+
+  fs.writeFile(fileName, svgString, (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log('Generated logo.svg');
+    }
+  });
+});
