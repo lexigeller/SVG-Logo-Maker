@@ -22,10 +22,10 @@ const questions = [
   {
     type: 'input',
     name: 'textColor',
-    message: 'What color would you like the text to be? Enter a color keyword (OR a hexadecimal number).',
+    message: 'What color would you like the text to be? Enter a color or a hex code.',
     validate: (textColor) => {
       if (validateColor(textColor)) return true;
-      else return 'Please enter a valid color (hex code or basic color name).';
+      else return 'Please enter a basic color name or hex code.';
     },
   },
   {
@@ -37,18 +37,21 @@ const questions = [
   {
     type: 'input',
     name: 'shapeColor',
-    message: 'What color would you like the shape to be? Enter a color keyword (OR a hexadecimal number).',
+    message: 'What color would you like the shape to be? Enter a color or a hex code.',
     validate: (shapeColor) => {
       if (validateColor(shapeColor)) return true;
-      else return 'Please enter a valid color (hex code or basic color name).';
+      else return 'Please enter a basic color name or hex code.';
     },
   },
 ];
 
 inquirer.prompt(questions).then((answers) => {
-  const { text, textColor, shape, shapeColor } = answers;
-  const fileName = 'logo.svg';
-  let shapeObject;
+    const { text, textColor, shape, shapeColor } = answers;
+  
+    // Generate the fileName based on the selected shape and color
+    const fileName = `${shape.toLowerCase()}_${shapeColor.toLowerCase()}_logo.svg`;
+  
+    let shapeObject;
 
   switch (shape.toLowerCase()) {
     case 'circle':
@@ -77,7 +80,7 @@ inquirer.prompt(questions).then((answers) => {
     if (err) {
       console.error(err);
     } else {
-      console.log('Generated logo.svg');
+      console.log(`Generated ${fileName}`);
     }
   });
 });
